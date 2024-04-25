@@ -8,9 +8,9 @@ from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 
 args = sys.argv
-ver = np.int(args[1])
-option = np.int(args[2])
-trajectory = np.int(args[3])
+ver = np.intc(args[1])
+option = np.intc(args[2])
+trajectory = np.intc(args[3])
 alpha = 0.008
 montemonte = 20
 optimzation_step = 70
@@ -44,6 +44,7 @@ theta_b = 0.8
 
 
 theta_list = np.zeros((montemonte,optimzation_step))
+gradient_list = np.zeros((montemonte, optimzation_step))
 
 for monte in range(montemonte):
     print(monte)
@@ -70,6 +71,7 @@ for monte in range(montemonte):
             x = b1*a+b2*x+np.random.normal(0,sigma3)
         
     theta = 1.0+np.random.uniform(0,0.2)
+    gradient = 0
     for rep in range(optimzation_step):
         ###print(rep)
         g_list = np.zeros((trajectory,step_size))
@@ -201,26 +203,27 @@ for monte in range(montemonte):
             V_estimator_derivative_list[:,t] +=   x_list[:,t]*np.sum(np.array([xx,x1,x2,a1,a2])*coefficient[:,np.newaxis],0) 
 
          
-         ### REINFORCE  
+        ### REINFORCE  
         if option==0:
             ipw_list = []
             for i in range(trajectory):
                 ipw_list.append(np.sum(np.exp(cumulative_raito_list[i,:])*y_list[i,:]*gsum_list[i,:]))
             ipw_list = np.array(ipw_list)
-            print np.mean(ipw_list)
             gradient = np.mean(ipw_list)
-            ####print(gradient)
+            print(gradient)
             theta = theta + alpha*gradient
-        ### PG1
+        ### PG1 - Marginal PG D (?)
         elif option==1: 
-            
+        
             pg_m_list = []
             auxi_list =  np.zeros((trajectory,step_size))
             for t in range(step_size):
                     auxi_list[:,t] = marginal_raito_list[:,t]*g_list[:,t]*Q_estimator_list[:,t]
             pg_m_list = np.sum(auxi_list,1)
-            ###print(gradient)
-        ###  PG2
+            gradient = np.mean(pg_m_list)
+            print(gradient)
+            theta = theta + alpha*gradient
+        ### PG2 - Cumulative PG D (?)
         elif option==2:
             
             pg_list = []
@@ -231,7 +234,7 @@ for monte in range(montemonte):
             gradient = np.mean(pg_list)
             print(gradient)
             theta = theta + alpha*gradient
-        ###  Cumulative PG 
+        ### Cumulative PG K (?)
         elif option==3:
             
             auxi =  np.zeros((trajectory,step_size))
@@ -249,7 +252,7 @@ for monte in range(montemonte):
             gradient = np.mean(db_estimator)
             print(gradient)
             theta = theta + alpha*gradient 
-        ###  Marginal PG    
+        ### Marginal PG  K (?)
         elif option==4: 
             auxi =  np.zeros((trajectory,step_size))
             for t in range(step_size):
@@ -293,6 +296,8 @@ for monte in range(montemonte):
             ####pass
             ##break
         theta_list[monte,rep] = theta
+        gradient_list[monte,rep] = gradient
         
         np.savez("result/option{}_ver={}_tra={}".format(option,ver,trajectory), x=theta_list)
+        np.savez("result/gradient_option{}_ver={}_tra={}".format(option,ver,trajectory), x=gradient_list)
     
