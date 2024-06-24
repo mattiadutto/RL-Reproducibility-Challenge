@@ -298,6 +298,6 @@ for monte in range(montemonte):
         theta_list[monte,rep] = theta
         gradient_list[monte,rep] = gradient
         
-        np.savez("result/option{}_ver={}_tra={}".format(option,ver,trajectory), x=theta_list)
-        np.savez("result/gradient_option{}_ver={}_tra={}".format(option,ver,trajectory), x=gradient_list)
+        np.savez("result/option_{}/option{}_ver={}_tra={}".format(option,option,ver,trajectory), x=theta_list)
+        np.savez("result/option_{}/gradient_option{}_ver={}_tra={}".format(option,option,ver,trajectory), x=gradient_list)
     
